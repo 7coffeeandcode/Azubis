@@ -172,7 +172,7 @@ class arbeitszeitrechner {
         //Math.ceil rundet krumme Tage auf, am Ende ziehen wir den letzten Tag ab
 
         //das Array bekommt die passende Anzahl an Plätzen
-        arbeitstag[] vergangeneTage=new arbeitstag[anzahlVergangeneTage];
+        arbeitstag [] vergangeneTage=new arbeitstag[anzahlVergangeneTage];
 
         //Eingabeschleife für die vergangenen Tage
         for (int i=0; i<anzahlVergangeneTage; i++){
