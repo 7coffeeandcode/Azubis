@@ -160,10 +160,44 @@ class arbeitszeitrechner {
             }
         }
 
-// Wie gestalte ich die Abfrage über Arrays für die Zeitspannen der Arbeitstage
-    //Option 1: verschiedene Arrays (für die verschiedenen Datentypen)
+// +++++++++++++++Wie gestalte ich die Abfrage über Arrays für die Zeitspannen der Arbeitstage++++++++++++++++++++++++++++++++
+
+    //Option 1: verschiedene Arrays (für die verschiedenen Datentypen: Ankommenzeit, Pause int)
     //Option 2: mehrdimensionales Array (Problem der verschiedenen Datentypen)
     //Option 3: Objektorientiert: Objekt Arbeitstag
+
+//3. Abfrage der ArbeitstagZeitspannen über arrays
+
+        int  anzahlVergangeneTage=(int) Math.ceil(sollArbeitstage)-1;
+        //Math.ceil rundet krumme Tage auf, am Ende ziehen wir den letzten Tag ab
+
+        //das Array bekommt die passende Anzahl an Plätzen
+        arbeitstag[] vergangeneTage=new arbeitstag[anzahlVergangeneTage];
+
+        //Eingabeschleife für die vergangenen Tage
+        for (int i=0; i<anzahlVergangeneTage; i++){
+            System.out.println("\n--- Eingabe für Arbeitstag "+ (i+1)+" ---");
+
+            System.out.print("Einstempeln (HH:mm): ");
+            LocalTime kommen=LocalTime.parse(scanner.next(), formatVorgabe);
+
+            System.out.print("Ausstempeln (HH:mm): ");
+            LocalTime gehen=LocalTime.parse(scanner.next(), formatVorgabe);
+
+            System.out.print("Pause in Minuten: ");
+            int pause=scanner.nextInt();
+        
+        //Erzeugen des Objekts im Hintergrund
+        vergangeneTage [i]=new arbeitstag(kommen, gehen, pause);
+        }
+        //Summe der bisherigen Arbeitszeit
+        int summeGeleisteteMinuten=0;
+        for (int i=0; i<vergangeneTage.length; i++){
+            summeGeleisteteMinuten+=vergangeneTage[i].getNettoArbeitsMinuten();
+        }
+        
+
+        
 
     }
     
