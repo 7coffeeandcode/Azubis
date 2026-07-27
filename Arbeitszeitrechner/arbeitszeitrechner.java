@@ -163,7 +163,7 @@ class arbeitszeitrechner {
 // +++++++++++++++Wie gestalte ich die Abfrage über Arrays für die Zeitspannen der Arbeitstage++++++++++++++++++++++++++++++++
 
     //Option 1: verschiedene Arrays (für die verschiedenen Datentypen: Ankommenzeit, Pause int)
-    //Option 2: mehrdimensionales Array (Problem der verschiedenen Datentypen)
+    //Option 2: mehrdimensionales Array (Problem der verschiedenen Datentypen, Pause könnte zwar als LocalTime-Uhrzeit laufen, müsste aber über get.Minute geholt/umgerechnet werden)
     //Option 3: Objektorientiert: Objekt Arbeitstag
 
 //3. Abfrage der ArbeitstagZeitspannen über arrays
