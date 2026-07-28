@@ -14,8 +14,8 @@ public class AzubiQuickCheck{
         final int tagesSoll=462;
 
         System.out.println("\n ======= AZUBI QUICK-CHECK =======");
-        System.out.println("\n Das ist ein Arbeitszeitrechner, der dir ausgibt wie lange du am letzten Wochenarbeitstag bleiben musst und die Eingabe deines sich stetig ändernden Arbeitszeitkontos berücksichtigt. Du kannst auch eingeben, mit welchem Zeitkontostand du in die nächste Woche starten willst.");
-        System.out.println("\n 38,5h - 5 Tage die Woche - 7,42h am Tag\n");
+        System.out.println("\nDas ist ein Arbeitszeitrechner. Anhand der Eingabe des aktuellen und gewünschten Zeitkontostandes \nermittelt es die exakte Ausstempelzeit für den jeweiligen Tag. Ideal zum Wochenabschluss.");
+        System.out.println("\nGrunddaten: 38,5h - 5 Tage die Woche - 7,42h am Tag\n");
 
          // 1. Einstempelzeit einlesen mit try-catch
         LocalTime kommen = null;
@@ -58,13 +58,13 @@ public class AzubiQuickCheck{
                 }
                 break; //wenn parsing klappt, springen wir aus der Schleife raus
             }catch (DateTimeParseException e){
-                System.out.println("\nUngültige Eingabe, versuchen Sie es nochmal mit dem richtigen Zeitformat:");
+                System.out.println("\nUngültige Eingabe, versuche es nochmal mit dem richtigen Zeitformat:");
             }
         }
         // 3. Erfassung des ZielZeitkontostandes
         int zielZeitkontominuten=0;
         while(true){
-            System.out.println("\nMit welchem Zeitkontostand wollen Sie aus der Woche raus? Wähle etwas zwischen (Format HH:mm, z.B. 00:00 oder 02:00):");
+            System.out.println("\nAuf welchen Wert wollen wir dein Zeitkonto bringen? Wähle etwas zwischen (Format HH:mm, z.B. 00:00 oder 02:00):");
             String eingabeZiel=scanner.next();
             try{ //der parse ins Zeitformat filtert falsche Eingaben (Minus, Länge, Buchstaben)
                 LocalTime zeitZiel=LocalTime.parse(eingabeZiel, timeFormatter);
@@ -75,7 +75,7 @@ public class AzubiQuickCheck{
                 break; //erfolgreich raus aus der Schleife
                 }
             }catch (DateTimeParseException e) {
-                System.out.println("Ungültige Eingabe, versuchen Sie es nochmal mit dem richtigen Format und positiver Zielzeit:");
+                System.out.println("Ungültige Eingabe, versuche es nochmal mit dem richtigen Format und positiver Zielzeit:");
             }
         }
         //4. Netto-Arbeitszeit für den letzten Tag berechnen
@@ -104,7 +104,7 @@ public class AzubiQuickCheck{
         //7. Feierabendsperre prüfen
 
         if (feierabend.isAfter(maxTarifFeierabend)){
-            System.out.println("Achtung-arbeiten nach 18.00 Uhr ist nicht erlaubt!");
+            System.out.println("Achtung - arbeiten nach 18.00 Uhr ist nicht erlaubt!");
 
             // Berechnung wie viele Minuten bis 18 Uhr gearbeitet werden können
             int maxAnwesenheitMinuten=(int)java.time.Duration.between(kommen, maxTarifFeierabend).toMinutes();
