@@ -13,8 +13,9 @@ public class AzubiQuickCheck{
         //feste Azubi-Parameter (38,5h / 5Tage = 7 h 42 min = 462 Minuten pro Tag
         final int tagesSoll=462;
 
-        System.out.println("\n === AZUBI QUICK-CHECK ===");
-        System.out.println("38,5h - 5 Tage die Woche - 7,42h am Tag\n");
+        System.out.println("\n ======= AZUBI QUICK-CHECK =======");
+        System.out.println("\n Das ist ein Arbeitszeitrechner, der dir ausgibt wie lange du am letzten Wochenarbeitstag bleiben musst und die Eingabe deines sich stetig ändernden Arbeitszeitkontos berücksichtigt. Du kannst auch eingeben, mit wieviel Plus du in die nächste Woche starten willst.");
+        System.out.println("\n 38,5h - 5 Tage die Woche - 7,42h am Tag\n");
 
          // 1. Einstempelzeit einlesen mit try-catch
         LocalTime kommen = null;
@@ -35,7 +36,7 @@ public class AzubiQuickCheck{
         // 2. Abfrage Zeitkonto Vorwoche
         
         System.out.println(
-                "Bitte Stand des Zeitkontos aus der Vorwoche eingeben (Format HH:mm oder -HH:mm, z.B. 02:30 oder -10:15)");
+                "\nBitte aktuellen Stand des Zeitkontos eingeben (Format HH:mm oder -HH:mm, z.B. 02:30 oder -10:15)");
         String eingabeVorwoche = scanner.next();
             try{     
                 // Rechenweg bei Minuszeichen
@@ -43,6 +44,7 @@ public class AzubiQuickCheck{
                 //Minus abschneiden, parsen und direkt mit -1 multiplizieren
                 LocalTime zeitVorwoche=LocalTime.parse(eingabeVorwoche.substring(1), timeFormatter);
                 eingabeVorwocheMinuten=(zeitVorwoche.getHour()*60+zeitVorwoche.getMinute())*-1;
+                
                 }else{
                 //normal rechnen bei positivem Zeitkonto
                 LocalTime zeitVorwoche=LocalTime.parse(eingabeVorwoche, timeFormatter);
@@ -56,14 +58,18 @@ public class AzubiQuickCheck{
         // 3. Erfassung des ZielZeitkontostandes
         int zielZeitkontominuten=0;
         while(true){
-            System.out.println("Mit welchem Zeitkontostand wollen Sie aus der Woche raus? (Format HH:mm, z.B. 00:00 oder 02:30)");
+            System.out.println("\nMit welchem Zeitkontostand wollen Sie aus der Woche raus? Wähle etwas zwischen (Format HH:mm, z.B. 00:00 oder 02:00):");
             String eingabeZiel=scanner.next();
             try{ //der parse ins Zeitformat filtert falsche Eingaben (Minus, Länge, Buchstaben)
                 LocalTime zeitZiel=LocalTime.parse(eingabeZiel, timeFormatter);
                 zielZeitkontominuten=zeitZiel.getHour()*60+zeitZiel.getMinute();
+                if (zielZeitkontominuten>120){
+                    System.out.println("Leider darf man als Azubi keine Überstunden anhäufen, deshalb kannst du nur max. 2 angeben.");
+                }else{
                 break; //erfolgreich raus aus der Schleife
+                }
             }catch (DateTimeParseException e) {
-                System.out.println("Ungültige Eingabe, versuchen Sie es nochmal mit dem richtigen Format:");
+                System.out.println("Ungültige Eingabe, versuchen Sie es nochmal mit dem richtigen Format und positiver Zielzeit:");
             }
         }
         //4. Netto-Arbeitszeit für den letzten Tag berechnen
@@ -78,8 +84,8 @@ public class AzubiQuickCheck{
             .plusMinutes(MAX_NETTO_MINUTEN)
             .plusMinutes(MAX_PAUSE_MINUTEN);
 
-        int zeitkontoNachMaxRechnungMinuten=nettoArbeitsMinuten-MAX_NETTO_MINUTEN;
-        System.out.println("Über 10 Stunden sind nicht erlaubt, wir sind nicht in Asien. Spätestens um " +maxFeierAbend.format(timeFormatter)+ " Uhr musst du ausstempeln (45 min. Pause inkl.)!");
+        int zeitkontoNachMaxRechnungMinuten=MAX_NETTO_MINUTEN-nettoArbeitsMinuten;
+        System.out.println("\nÜber 10 Stunden sind nicht erlaubt, wir sind nicht in Asien. Spätestens um " +maxFeierAbend.format(timeFormatter)+ " Uhr musst du ausstempeln (45 min. Pause inkl.)!");
         System.out.println("Es verbleiben dann noch " + (zeitkontoNachMaxRechnungMinuten/60)+ " Std. "+(zeitkontoNachMaxRechnungMinuten%60)+" Min. auf deinem Zeitkonto.");
         scanner.close();
         return;
@@ -88,10 +94,13 @@ public class AzubiQuickCheck{
         int pauseMinuten=0;
         if (nettoArbeitsMinuten>540){
             pauseMinuten=45;
+            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über neuen Stunden. Nach §4 ArbZG rechne ich dir 45 min. Pause ein.");
         }else if (nettoArbeitsMinuten>360){
             pauseMinuten=30;
+            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über sechs Stunden. Nach §4 ArbZG rechne ich dir 30 min. Pause ein.");
         }else{
             pauseMinuten=0;
+            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl unter sechs Stunden. Nach §4 ArbZG rechne ich keine Pause ein.");
         }
         //7. FeierabendUhrzeit berechnen
         LocalTime feierabend=kommen
@@ -99,7 +108,7 @@ public class AzubiQuickCheck{
                 .plusMinutes(pauseMinuten);
 
         //8. Ergebnis
-        System.out.println("Du musst um "+feierabend.format(timeFormatter)+" Uhr gehen. Dabei sind " +pauseMinuten+" Pause eingerechnet.");
+        System.out.println("\nAbflug um "+feierabend.format(timeFormatter)+" Uhr.");
         }
         }
     
