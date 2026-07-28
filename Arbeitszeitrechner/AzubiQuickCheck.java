@@ -14,7 +14,7 @@ public class AzubiQuickCheck{
         final int tagesSoll=462;
 
         System.out.println("\n ======= AZUBI QUICK-CHECK =======");
-        System.out.println("\n Das ist ein Arbeitszeitrechner, der dir ausgibt wie lange du am letzten Wochenarbeitstag bleiben musst und die Eingabe deines sich stetig ändernden Arbeitszeitkontos berücksichtigt. Du kannst auch eingeben, mit wieviel Plus du in die nächste Woche starten willst.");
+        System.out.println("\n Das ist ein Arbeitszeitrechner, der dir ausgibt wie lange du am letzten Wochenarbeitstag bleiben musst und die Eingabe deines sich stetig ändernden Arbeitszeitkontos berücksichtigt. Du kannst auch eingeben, mit welchem Zeitkontostand du in die nächste Woche starten willst.");
         System.out.println("\n 38,5h - 5 Tage die Woche - 7,42h am Tag\n");
 
          // 1. Einstempelzeit einlesen mit try-catch
@@ -25,10 +25,14 @@ public class AzubiQuickCheck{
 
             try {
                 kommen = LocalTime.parse(eingabeZeit, timeFormatter);
+                if (kommen.isBefore(LocalTime.of(6,0))){
+                    System.out.println("\nAchtung-vor sechs Uhr ist das Arbeiten nicht gestattet. Bitte korrigieren:\n");
+                    continue;
+                }
                 break; // Hat geklappt! Wir springen aus der Schleife.
             } catch (DateTimeParseException e) {
                 // Falls die Eingabe ungültig war, fangen wir den Fehler ab:
-                System.out.println("Ungültiges Format! Bitte um Korrektur:\n");
+                System.out.println("\nUngültiges Zeitformat! Bitte um Korrektur:\n");
             }
         }
         int eingabeVorwocheMinuten=0;
@@ -52,7 +56,7 @@ public class AzubiQuickCheck{
                 }
                 break; //wenn parsing klappt, springen wir aus der Schleife raus
             }catch (DateTimeParseException e){
-                System.out.println("Ungültige Eingabe, versuchen Sie es nochmal mit dem richtigen Format:");
+                System.out.println("\nUngültige Eingabe, versuchen Sie es nochmal mit dem richtigen Zeitformat:");
             }
         }
         // 3. Erfassung des ZielZeitkontostandes
@@ -64,7 +68,7 @@ public class AzubiQuickCheck{
                 LocalTime zeitZiel=LocalTime.parse(eingabeZiel, timeFormatter);
                 zielZeitkontominuten=zeitZiel.getHour()*60+zeitZiel.getMinute();
                 if (zielZeitkontominuten>120){
-                    System.out.println("Leider darf man als Azubi keine Überstunden anhäufen, deshalb kannst du nur max. 2 angeben.");
+                    System.out.println("\nLeider darf man als Azubi keine Überstunden anhäufen, deshalb kannst du nur max. 2 angeben.");
                 }else{
                 break; //erfolgreich raus aus der Schleife
                 }
@@ -106,6 +110,32 @@ public class AzubiQuickCheck{
         LocalTime feierabend=kommen
                 .plusMinutes(nettoArbeitsMinuten)
                 .plusMinutes(pauseMinuten);
+
+        LocalTime maxTarifFeierabend=LocalTime.of(18,0);
+
+        if (feierabend.isAfter(maxTarifFeierabend)){
+            System.out.println("Achtung-arbeiten nach 18.00 Uhr ist nicht erlaubt!");
+
+            // Berechnung wie viele Minuten bis 18 Uhr gearbeitet werden können
+            int maxAnwesenheitMinuten=(int)java.time.Duration.between(kommen, maxTarifFeierabend).toMinutes();
+            // Pause für die gekappte Zeit neu bestimmen (ArbZG §4)
+            int tatsaechlichePause = 0;
+            if (maxAnwesenheitMinuten > 585) {      // > 9 Std. Anwesenheit (540 Min Netto + 45 Min Pause)
+            tatsaechlichePause = 45;
+            } else if (maxAnwesenheitMinuten > 390) { // > 6 Std. Anwesenheit (360 Min Netto + 30 Min Pause)
+            tatsaechlichePause = 30;
+            }
+            int verbleibendeNettoArbeitsMinuten=maxAnwesenheitMinuten-pauseMinuten;
+            int nichtLeistbareMinuten=nettoArbeitsMinuten-verbleibendeNettoArbeitsMinuten;
+
+            //neues angepasstes Zielzeitkonto
+            int neuesZielMinuten=zielZeitkontominuten-nichtLeistbareMinuten;
+
+            //Feierabend auf 18 Uhr setzen
+            feierabend=maxTarifFeierabend;
+
+            System.out.println("Dein geplantes Zeitkontoziel ist nicht bis 18 Uhr erreichbar. wir müssen es auf "+neuesZielMinuten+ " Minuten anpassen.");
+        }
 
         //8. Ergebnis
         System.out.println("\nAbflug um "+feierabend.format(timeFormatter)+" Uhr.");
