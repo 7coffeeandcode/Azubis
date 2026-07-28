@@ -19,14 +19,16 @@ public class AzubiQuickCheck{
 
          // 1. Einstempelzeit einlesen mit try-catch
         LocalTime kommen = null;
+        LocalTime minKernzeit=LocalTime.of(6,0);
+        LocalTime maxKernzeit=LocalTime.of(9,0);
         while (true) {
             System.out.print("Einstempelzeit heute eingeben (Format HH:mm, z.B. 07:30): \n");
             String eingabeZeit = scanner.next();
 
             try {
                 kommen = LocalTime.parse(eingabeZeit, timeFormatter);
-                if (kommen.isBefore(LocalTime.of(6,0))){
-                    System.out.println("\nAchtung-vor sechs Uhr ist das Arbeiten nicht gestattet. Bitte korrigieren:\n");
+                if (kommen.isBefore(minKernzeit)|| kommen.isAfter(maxKernzeit)){
+                    System.out.println("\nAchtung-Der Arbeitsbeginn muss in der Kernzeit zwischen 6-9 Uhr liegen. Bitte korrigieren:\n");
                     continue;
                 }
                 break; // Hat geklappt! Wir springen aus der Schleife.
@@ -79,7 +81,64 @@ public class AzubiQuickCheck{
         //4. Netto-Arbeitszeit für den letzten Tag berechnen
         int nettoArbeitsMinuten=tagesSoll+zielZeitkontominuten-eingabeVorwocheMinuten;
 
-        //5. Überprüfung der Grenzwerte
+        
+        //5. gesetzliche Pausenregelung
+        int pauseMinuten=0;
+        if (nettoArbeitsMinuten>540){
+            pauseMinuten=45;
+            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über neun Stunden. Nach §4 ArbZG rechne ich dir 45 min. Pause ein.");
+        }else if (nettoArbeitsMinuten>360){
+            pauseMinuten=30;
+            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über sechs Stunden. Nach §4 ArbZG rechne ich dir 30 min. Pause ein.");
+        }else{
+            pauseMinuten=0;
+            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl unter sechs Stunden. Nach §4 ArbZG rechne ich keine Pause ein.");
+        }
+        //6. FeierabendUhrzeit berechnen
+        LocalTime feierabend=kommen
+                .plusMinutes(nettoArbeitsMinuten)
+                .plusMinutes(pauseMinuten);
+
+        LocalTime maxTarifFeierabend=LocalTime.of(18,0);
+
+        //7. Feierabendsperre prüfen
+
+        if (feierabend.isAfter(maxTarifFeierabend)){
+            System.out.println("Achtung-arbeiten nach 18.00 Uhr ist nicht erlaubt!");
+
+            // Berechnung wie viele Minuten bis 18 Uhr gearbeitet werden können
+            int maxAnwesenheitMinuten=(int)java.time.Duration.between(kommen, maxTarifFeierabend).toMinutes();
+            // Pause für die gekappte Zeit neu bestimmen (ArbZG §4)
+            int tatsaechlichePause = 0;
+            if (maxAnwesenheitMinuten > 585) {      // > 9 Std. Anwesenheit (540 Min Netto + 45 Min Pause)
+            tatsaechlichePause = 45;
+            } else if (maxAnwesenheitMinuten > 390) { // > 6 Std. Anwesenheit (360 Min Netto + 30 Min Pause)
+            tatsaechlichePause = 30;
+            }
+            int verbleibendeNettoArbeitsMinuten=maxAnwesenheitMinuten-tatsaechlichePause;
+            int nichtLeistbareMinuten=nettoArbeitsMinuten-verbleibendeNettoArbeitsMinuten;
+
+            //neues angepasstes Zielzeitkonto
+            int neuesZielMinuten=zielZeitkontominuten-nichtLeistbareMinuten;
+
+            //Feierabend auf 18 Uhr setzen
+            feierabend=maxTarifFeierabend;
+
+            // Formatierung in HH:mm inklusive Vorzeichen
+            int absMinuten = Math.abs(neuesZielMinuten);
+            int stunden = absMinuten / 60;
+            int minuten = absMinuten % 60;
+            String stundenText = (stunden < 10) ? "0" + stunden : "" + stunden;
+            String minutenText = (minuten < 10) ? "0" + minuten : "" + minuten;
+            String vorzeichen = (neuesZielMinuten < 0) ? "-" : "";
+
+            String neuesZielHHMM = vorzeichen + stundenText + ":" + minutenText;
+
+            System.out.println("Dein geplantes Zeitkontoziel ist nicht bis 18 Uhr erreichbar.");
+            System.out.println("Wir müssen dein Kontoziel auf " + neuesZielHHMM + " anpassen.");
+            
+        }
+        //8. Überprüfung der 10h-Grenze
         if (nettoArbeitsMinuten>600){
             final int MAX_NETTO_MINUTEN=600;
             final int MAX_PAUSE_MINUTEN=45; //gesetzlich bei > 9h
@@ -94,51 +153,11 @@ public class AzubiQuickCheck{
         scanner.close();
         return;
         }
-        //6. gesetzliche Pausenregelung
-        int pauseMinuten=0;
-        if (nettoArbeitsMinuten>540){
-            pauseMinuten=45;
-            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über neuen Stunden. Nach §4 ArbZG rechne ich dir 45 min. Pause ein.");
-        }else if (nettoArbeitsMinuten>360){
-            pauseMinuten=30;
-            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über sechs Stunden. Nach §4 ArbZG rechne ich dir 30 min. Pause ein.");
-        }else{
-            pauseMinuten=0;
-            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl unter sechs Stunden. Nach §4 ArbZG rechne ich keine Pause ein.");
-        }
-        //7. FeierabendUhrzeit berechnen
-        LocalTime feierabend=kommen
-                .plusMinutes(nettoArbeitsMinuten)
-                .plusMinutes(pauseMinuten);
+       
 
-        LocalTime maxTarifFeierabend=LocalTime.of(18,0);
-
-        if (feierabend.isAfter(maxTarifFeierabend)){
-            System.out.println("Achtung-arbeiten nach 18.00 Uhr ist nicht erlaubt!");
-
-            // Berechnung wie viele Minuten bis 18 Uhr gearbeitet werden können
-            int maxAnwesenheitMinuten=(int)java.time.Duration.between(kommen, maxTarifFeierabend).toMinutes();
-            // Pause für die gekappte Zeit neu bestimmen (ArbZG §4)
-            int tatsaechlichePause = 0;
-            if (maxAnwesenheitMinuten > 585) {      // > 9 Std. Anwesenheit (540 Min Netto + 45 Min Pause)
-            tatsaechlichePause = 45;
-            } else if (maxAnwesenheitMinuten > 390) { // > 6 Std. Anwesenheit (360 Min Netto + 30 Min Pause)
-            tatsaechlichePause = 30;
-            }
-            int verbleibendeNettoArbeitsMinuten=maxAnwesenheitMinuten-pauseMinuten;
-            int nichtLeistbareMinuten=nettoArbeitsMinuten-verbleibendeNettoArbeitsMinuten;
-
-            //neues angepasstes Zielzeitkonto
-            int neuesZielMinuten=zielZeitkontominuten-nichtLeistbareMinuten;
-
-            //Feierabend auf 18 Uhr setzen
-            feierabend=maxTarifFeierabend;
-
-            System.out.println("Dein geplantes Zeitkontoziel ist nicht bis 18 Uhr erreichbar. wir müssen es auf "+neuesZielMinuten+ " Minuten anpassen.");
-        }
-
-        //8. Ergebnis
+        //9. Ergebnis
         System.out.println("\nAbflug um "+feierabend.format(timeFormatter)+" Uhr.");
+        scanner.close();
         }
         }
     
