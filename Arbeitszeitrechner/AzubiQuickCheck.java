@@ -16,6 +16,8 @@ public class AzubiQuickCheck{
         System.out.println("\n ======= AZUBI QUICK-CHECK =======");
         System.out.println("\nDas ist ein Arbeitszeitrechner. Anhand der Eingabe des aktuellen und gewünschten Zeitkontostandes \nermittelt es die exakte Ausstempelzeit für den jeweiligen Tag. Ideal zum Wochenabschluss.");
         System.out.println("\nGrunddaten: 38,5h - 5 Tage die Woche - 7,42h am Tag\n");
+        System.out.println("\nBeachte die Kernarbeitszeit von 9-15 Uhr. Freitags kannst du früher Schluss machen.\n");
+        System.out.println("\nMusterwoche: \nDu baust von Mo-Do täglich 30min. Plus auf dein Zeitkonto. Am Freitag hast du dann zwei \nPlusstunden, setzt deine Zielzeit für kommende Woche wieder auf 00:00 und kannst nach \n5 Std. 42 Min. gehen, Pause wird erst ab 6h fällig.\n");
 
          // 1. Einstempelzeit einlesen mit try-catch
         LocalTime kommen = null;
