@@ -9,7 +9,7 @@
 }
 
 .dark {
-    --bg-image: url('Foto_nacht.jpg');
+    --bg-image: url('Foto_nacht2.jpg');
     --bg-card: rgba(15, 23, 42, 0.90);
     --text-primary: #f8fafc;
 }
