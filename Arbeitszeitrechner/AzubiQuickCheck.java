@@ -122,7 +122,7 @@ public class AzubiQuickCheck{
             if (verletzt10Stunden && verletzt18Uhr) {
                 System.out.println("\nDu überschreitest die maximale Arbeitszeit von 10h UND die 18 Uhr Grenze.");
             } else if (verletzt10Stunden) {
-                System.out.println("\nÜber 10 Stunden sind nicht erlaubt. Spätestens um 10h Netto ist Schluss!");
+                System.out.println("\nÜber 10 Stunden sind nicht erlaubt. Wir sind nicht in Asien!");
             } else if (verletzt18Uhr) {
                 System.out.println("\nDu erreichst die 18 Uhr Grenze. Länger darfst du nicht arbeiten.");
             }
