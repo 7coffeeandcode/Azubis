@@ -1,4 +1,3 @@
-import java.util.Locale; // Landessprache, hier Komma statt Punkt
 import java.util.Scanner; // Benutzereingaben einlesen über Tastatur (System.in)
 import java.time.LocalTime; // speichert und verarbeitet reine Uhrzeiten
 import java.time.format.DateTimeFormatter; //formattiert Daten in Zeitobjekte mit definiertem Format
@@ -6,8 +5,7 @@ import java.time.format.DateTimeParseException; //fängt fehlerhafte Zeiteingabe
 
 public class AzubiQuickCheck{
     public static void main(String[]args){
-        Locale.setDefault(Locale.GERMANY);
-        Scanner scanner = new Scanner(System.in);
+         Scanner scanner = new Scanner(System.in);
         DateTimeFormatter timeFormatter=DateTimeFormatter.ofPattern("HH:mm");
 
         //feste Azubi-Parameter (38,5h / 5Tage = 7 h 42 min = 462 Minuten pro Tag
@@ -31,7 +29,7 @@ public class AzubiQuickCheck{
                 kommen = LocalTime.parse(eingabeZeit, timeFormatter);
                 if (kommen.isBefore(minKernzeit)|| kommen.isAfter(maxKernzeit)){
                     System.out.println("\nAchtung-Der Arbeitsbeginn muss in der Kernzeit zwischen 6-9 Uhr liegen. Bitte korrigieren:\n");
-                    continue;
+                    continue; //zurück an den Anfang der Schleife
                 }
                 break; // Hat geklappt! Wir springen aus der Schleife.
             } catch (DateTimeParseException e) {
@@ -39,23 +37,23 @@ public class AzubiQuickCheck{
                 System.out.println("\nUngültiges Zeitformat! Bitte um Korrektur:\n");
             }
         }
-        // 2. Abfrage Zeitkonto Vorwoche
-        int eingabeVorwocheMinuten=0;
+        // 2. Abfrage altes Zeitkonto
+        int zeitkontoAltMinuten=0;
         while(true){ //Abfangen von Eingabefehlern
                 
         System.out.println(
                 "\nBitte aktuellen Stand des Zeitkontos eingeben (Format HH:mm oder -HH:mm, z.B. 02:30 oder -10:15)");
-        String eingabeVorwoche = scanner.next();
+        String eingabeZeitkontoAlt = scanner.next();
             try{     
                 // Rechenweg bei Minuszeichen
-                if (eingabeVorwoche.startsWith("-")){
+                if (eingabeZeitkontoAlt .startsWith("-")){
                 //Minus abschneiden, parsen und direkt mit -1 multiplizieren
-                LocalTime zeitVorwoche=LocalTime.parse(eingabeVorwoche.substring(1), timeFormatter);
-                eingabeVorwocheMinuten=(zeitVorwoche.getHour()*60+zeitVorwoche.getMinute())*-1;
+                LocalTime zeitAlt=LocalTime.parse(eingabeZeitkontoAlt .substring(1), timeFormatter);
+                zeitkontoAltMinuten=(zeitAlt.getHour()*60+zeitAlt.getMinute())*-1;
                 }else{
                 //normal rechnen bei positivem Zeitkonto
-                LocalTime zeitVorwoche=LocalTime.parse(eingabeVorwoche, timeFormatter);
-                eingabeVorwocheMinuten=(zeitVorwoche.getHour()*60+zeitVorwoche.getMinute());
+                LocalTime zeitAlte=LocalTime.parse(eingabeZeitkontoAlt , timeFormatter);
+                zeitkontoAltMinuten=(zeitAlt.getHour()*60+zeitAlt.getMinute());
                 }
                 break; //wenn parsing klappt, springen wir aus der Schleife raus
             }catch (DateTimeParseException e){
@@ -80,7 +78,7 @@ public class AzubiQuickCheck{
             }
         }
         //4. Netto-Arbeitszeit für den letzten Tag berechnen
-        int nettoArbeitsMinuten=tagesSoll+zielZeitkontominuten-eingabeVorwocheMinuten;
+        int nettoArbeitsMinuten=tagesSoll+zielZeitkontominuten-zeitkontoAltMinuten;
 
         //5. gesetzliche Pausenregelung Berechnung
         int pauseMinuten=0;
@@ -140,7 +138,7 @@ public class AzubiQuickCheck{
             int finalePause = (erlaubtesNetto > 540) ? 45 : ((erlaubtesNetto > 360) ? 30 : 0);
             LocalTime tatsaechlicherFeierabend = kommen.plusMinutes(erlaubtesNetto).plusMinutes(finalePause);
 
-            int neuesZielMinuten = eingabeVorwocheMinuten + erlaubtesNetto - tagesSoll;
+            int neuesZielMinuten = zeitkontoAltMinuten + erlaubtesNetto - tagesSoll;
 
             // Formatierung in HH:mm inklusive Vorzeichen
             int absMinuten = Math.abs(neuesZielMinuten);
