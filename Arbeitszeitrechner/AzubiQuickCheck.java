@@ -14,9 +14,9 @@ public class AzubiQuickCheck{
         final int tagesSoll=462;
 
         System.out.println("\n ======= AZUBI QUICK-CHECK =======");
-        System.out.println("\nDas ist ein Arbeitszeitrechner. Anhand der Eingabe des aktuellen und gewünschten Zeitkontostandes \nermittelt es die exakte Ausstempelzeit für den jeweiligen Tag. Ideal zum Wochenabschluss.");
-        System.out.println("\nGrunddaten: 38,5h - 5 Tage die Woche - 7,42h am Tag\n");
-        System.out.println("\nBeachte die Kernarbeitszeit von 9-15 Uhr. Freitags kannst du früher Schluss machen.\n");
+        System.out.println("\nDas ist ein Arbeitszeitrechner. Anhand der Eingabe des aktuellen und gewünschten Zeitkontostandes \nermittelt es die exakte Ausstempelzeit für den jeweiligen Tag. Ideal zum Wochenabschluss.\nNicht ins Minus, aber so früh wie möglich nach Hause :)");
+        System.out.println("\nGrunddaten: 38,5h - 5 Tage die Woche - 7,42h am Tag");
+        System.out.println("\nBeachte die Kernarbeitszeit von 9-15 Uhr. Freitags kannst du früher Schluss machen.\nEinstempeln vor 6 Uhr und Ausstempeln nach 18 Uhr darfst du nicht.");
         System.out.println("\nMusterwoche: \nDu baust von Mo-Do täglich 30min. Plus auf dein Zeitkonto. Am Freitag hast du dann zwei \nPlusstunden, setzt deine Zielzeit für kommende Woche wieder auf 00:00 und kannst nach \n5 Std. 42 Min. gehen, Pause wird erst ab 6h fällig.\n");
 
          // 1. Einstempelzeit einlesen mit try-catch
@@ -39,10 +39,10 @@ public class AzubiQuickCheck{
                 System.out.println("\nUngültiges Zeitformat! Bitte um Korrektur:\n");
             }
         }
-        int eingabeVorwocheMinuten=0;
-         while(true){ //Abfangen von Eingabefehlern
         // 2. Abfrage Zeitkonto Vorwoche
-        
+        int eingabeVorwocheMinuten=0;
+        while(true){ //Abfangen von Eingabefehlern
+                
         System.out.println(
                 "\nBitte aktuellen Stand des Zeitkontos eingeben (Format HH:mm oder -HH:mm, z.B. 02:30 oder -10:15)");
         String eingabeVorwoche = scanner.next();
@@ -52,7 +52,6 @@ public class AzubiQuickCheck{
                 //Minus abschneiden, parsen und direkt mit -1 multiplizieren
                 LocalTime zeitVorwoche=LocalTime.parse(eingabeVorwoche.substring(1), timeFormatter);
                 eingabeVorwocheMinuten=(zeitVorwoche.getHour()*60+zeitVorwoche.getMinute())*-1;
-                
                 }else{
                 //normal rechnen bei positivem Zeitkonto
                 LocalTime zeitVorwoche=LocalTime.parse(eingabeVorwoche, timeFormatter);
@@ -83,18 +82,17 @@ public class AzubiQuickCheck{
         //4. Netto-Arbeitszeit für den letzten Tag berechnen
         int nettoArbeitsMinuten=tagesSoll+zielZeitkontominuten-eingabeVorwocheMinuten;
 
-        
-        //5. gesetzliche Pausenregelung
+        //5. gesetzliche Pausenregelung Berechnung
         int pauseMinuten=0;
         if (nettoArbeitsMinuten>540){
             pauseMinuten=45;
-            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über neun Stunden. Nach §4 ArbZG rechne ich dir 45 min. Pause ein.");
+            
         }else if (nettoArbeitsMinuten>360){
             pauseMinuten=30;
-            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über sechs Stunden. Nach §4 ArbZG rechne ich dir 30 min. Pause ein.");
+           
         }else{
             pauseMinuten=0;
-            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl unter sechs Stunden. Nach §4 ArbZG rechne ich keine Pause ein.");
+            
         }
         //6. FeierabendUhrzeit berechnen
         LocalTime feierabend=kommen
@@ -103,59 +101,73 @@ public class AzubiQuickCheck{
 
         LocalTime maxTarifFeierabend=LocalTime.of(18,0);
 
-        //7. Feierabendsperre prüfen
 
-        if (feierabend.isAfter(maxTarifFeierabend)){
-            System.out.println("Achtung - arbeiten nach 18.00 Uhr ist nicht erlaubt!");
+        // 7. Prüfen, ob die Ergebnisvariable im gültigen Bereich liegt
+        
+        // 7. Prüfen der Grenzfälle mit Flags (Booleans)
+        
+        // A) Limit durch die 18-Uhr-Grenze ermitteln
+        int maxAnwesenheitMinuten = (int) java.time.Duration.between(kommen, maxTarifFeierabend).toMinutes();
+        int tatsaechlichePauseBis18 = (maxAnwesenheitMinuten > 585) ? 45 : ((maxAnwesenheitMinuten > 390) ? 30 : 0);
+        int maxNettoBis18 = maxAnwesenheitMinuten - tatsaechlichePauseBis18;
 
-            // Berechnung wie viele Minuten bis 18 Uhr gearbeitet werden können
-            int maxAnwesenheitMinuten=(int)java.time.Duration.between(kommen, maxTarifFeierabend).toMinutes();
-            // Pause für die gekappte Zeit neu bestimmen (ArbZG §4)
-            int tatsaechlichePause = 0;
-            if (maxAnwesenheitMinuten > 585) {      // > 9 Std. Anwesenheit (540 Min Netto + 45 Min Pause)
-            tatsaechlichePause = 45;
-            } else if (maxAnwesenheitMinuten > 390) { // > 6 Std. Anwesenheit (360 Min Netto + 30 Min Pause)
-            tatsaechlichePause = 30;
+        // B) Flags für die Grenzverletzungen setzen
+        boolean verletzt10Stunden = nettoArbeitsMinuten > 600;
+        boolean verletzt18Uhr = feierabend.isAfter(maxTarifFeierabend);
+
+        // C) Auswertung über die Flags
+        if (verletzt10Stunden || verletzt18Uhr) {
+            
+            // 1. Textausgabe je nach Zustand der Flags
+            if (verletzt10Stunden && verletzt18Uhr) {
+                System.out.println("\nDu überschreitest die maximale Arbeitszeit von 10h UND die 18 Uhr Grenze.");
+            } else if (verletzt10Stunden) {
+                System.out.println("\nÜber 10 Stunden sind nicht erlaubt. Spätestens um 10h Netto ist Schluss!");
+            } else if (verletzt18Uhr) {
+                System.out.println("\nDu erreichst die 18 Uhr Grenze. Länger darfst du nicht arbeiten.");
             }
-            int verbleibendeNettoArbeitsMinuten=maxAnwesenheitMinuten-tatsaechlichePause;
-            int nichtLeistbareMinuten=nettoArbeitsMinuten-verbleibendeNettoArbeitsMinuten;
 
-            //neues angepasstes Zielzeitkonto
-            int neuesZielMinuten=zielZeitkontominuten-nichtLeistbareMinuten;
+            // 2. Erlaubte Netto-Minuten bestimmen
+            int erlaubtesNetto = nettoArbeitsMinuten;
+            if (verletzt10Stunden) {
+                erlaubtesNetto = Math.min(erlaubtesNetto, 600);
+            }
+            if (verletzt18Uhr) {
+                erlaubtesNetto = Math.min(erlaubtesNetto, maxNettoBis18);
+            }
 
-            //Feierabend auf 18 Uhr setzen
-            feierabend=maxTarifFeierabend;
+            // 3. Ausstempeln & neues Zielkonto neu berechnen
+            int finalePause = (erlaubtesNetto > 540) ? 45 : ((erlaubtesNetto > 360) ? 30 : 0);
+            LocalTime tatsaechlicherFeierabend = kommen.plusMinutes(erlaubtesNetto).plusMinutes(finalePause);
+
+            int neuesZielMinuten = eingabeVorwocheMinuten + erlaubtesNetto - tagesSoll;
 
             // Formatierung in HH:mm inklusive Vorzeichen
             int absMinuten = Math.abs(neuesZielMinuten);
-            int stunden = absMinuten / 60;
-            int minuten = absMinuten % 60;
-            String stundenText = (stunden < 10) ? "0" + stunden : "" + stunden;
-            String minutenText = (minuten < 10) ? "0" + minuten : "" + minuten;
+            String stundenText = String.format("%02d", absMinuten / 60);
+            String minutenText = String.format("%02d", absMinuten % 60);
             String vorzeichen = (neuesZielMinuten < 0) ? "-" : "";
-
             String neuesZielHHMM = vorzeichen + stundenText + ":" + minutenText;
 
-            System.out.println("Dein geplantes Zeitkontoziel ist nicht bis 18 Uhr erreichbar.");
-            System.out.println("Wir müssen dein Kontoziel auf " + neuesZielHHMM + " anpassen.");
-            
-        }
-        //8. Überprüfung der 10h-Grenze
-        if (nettoArbeitsMinuten>600){
-            final int MAX_NETTO_MINUTEN=600;
-            final int MAX_PAUSE_MINUTEN=45; //gesetzlich bei > 9h
-            //späteste Ausstempelzeit
-            LocalTime maxFeierAbend=kommen
-            .plusMinutes(MAX_NETTO_MINUTEN)
-            .plusMinutes(MAX_PAUSE_MINUTEN);
+            System.out.println("Spätestens um " + tatsaechlicherFeierabend.format(timeFormatter) + " Uhr musst du ausstempeln.");
+            System.out.println("Das angepasste Zeitkonto steht dann auf " + neuesZielHHMM);
 
-        int zeitkontoNachMaxRechnungMinuten=MAX_NETTO_MINUTEN-nettoArbeitsMinuten;
-        System.out.println("\nÜber 10 Stunden sind nicht erlaubt, wir sind nicht in Asien. Spätestens um " +maxFeierAbend.format(timeFormatter)+ " Uhr musst du ausstempeln (45 min. Pause inkl.)!");
-        System.out.println("Es verbleiben dann noch " + (zeitkontoNachMaxRechnungMinuten/60)+ " Std. "+(zeitkontoNachMaxRechnungMinuten%60)+" Min. auf deinem Zeitkonto.");
-        scanner.close();
-        return;
+            scanner.close();
+            return;
         }
-       
+               
+       //8. -aus 5. gesetzliche Pausenregelung Ausgabe
+        
+        if (nettoArbeitsMinuten>540){
+            pauseMinuten=45;
+            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über neun Stunden. Nach §4 ArbZG rechne ich dir 45 min. Pause ein.");
+        }else if (nettoArbeitsMinuten>360){
+            pauseMinuten=30;
+           System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über sechs Stunden. Nach §4 ArbZG rechne ich dir 30 min. Pause ein.");
+        }else{
+            pauseMinuten=0;
+            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl unter sechs Stunden. Nach §4 ArbZG rechne ich keine Pause ein.");
+        }
 
         //9. Ergebnis
         System.out.println("\nAbflug um "+feierabend.format(timeFormatter)+" Uhr.");
