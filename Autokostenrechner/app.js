@@ -91,7 +91,7 @@ function setFuel(type) {
 
         if (consLabel) consLabel.innerText = "Verbrauch (L/100km)";
         if (priceLabel) priceLabel.innerText = "Preis pro Lit. (€)";
-        if (document.getElementById('priceInput')) document.getElementById('priceInput').value = "1.75";
+        if (document.getElementById('priceInput')) document.getElementById('priceInput').value = "2.1";
         if (document.getElementById('consumptionInput')) document.getElementById('consumptionInput').value = "6.5";
     }
 
@@ -224,28 +224,52 @@ async function calculateRoute() {
 }
 
 function updateCalculations() {
-    const consumptionInput = document.getElementById('consumptionInput');
-    const priceInput = document.getElementById('priceInput');
-    const daysInput = document.getElementById('daysInput');
+    // 1. Distanz direkt aus dem HTML-Element "distDisplay" auslesen (z.B. "69.8 km")
+    let distanceOneWay = 0;
+    const distElem = document.getElementById('distDisplay');
 
-    const consumption = parseFloat(consumptionInput ? consumptionInput.value : 0) || 0;
-    const price = parseFloat(priceInput ? priceInput.value : 0) || 0;
-    const days = parseInt(daysInput ? daysInput.value : 0) || 0;
+    if (distElem) {
+        // Text säubern: Komma durch Punkt ersetzen und reine Zahl extrahieren
+        const cleanText = distElem.innerText.replace(',', '.');
+        distanceOneWay = parseFloat(cleanText) || 0;
+    }
 
-    const oneWayCost = (currentDistanceKm / 100) * consumption * price;
-    const dailyCost = oneWayCost * 2;
-    const monthlyCost = dailyCost * days;
-    const yearlyCost = monthlyCost * 11;
+    // Fallback: Falls Element leer ist, globale Variable nutzen
+    if (distanceOneWay === 0 && typeof currentDistance !== 'undefined') {
+        distanceOneWay = currentDistance;
+    }
 
-    const dailyDisplay = document.getElementById('dailyCostDisplay');
-    const monthlyDisplay = document.getElementById('monthlyCostDisplay');
-    const yearlyDisplay = document.getElementById('yearlyCostDisplay');
+    // 2. Hilfsfunktion für sicheres Auslesen der Formularfelder (Komma-Unterstützung)
+    const getVal = (id, defaultValue) => {
+        const el = document.getElementById(id);
+        if (!el || !el.value) return defaultValue;
+        return parseFloat(el.value.toString().replace(',', '.')) || defaultValue;
+    };
 
-    if (dailyDisplay) dailyDisplay.innerText = dailyCost.toFixed(2) + " €";
-    if (monthlyDisplay) monthlyDisplay.innerText = monthlyCost.toFixed(2) + " €";
-    if (yearlyDisplay) yearlyDisplay.innerText = yearlyCost.toFixed(2) + " €";
+    // 3. Eingabewerte abrufen (Verbrauch, Preis, Arbeitstage)
+    const consumption = getVal('consumptionInput', 6.5);
+    const price = getVal('priceInput', 2.1);
+    const daysPerMonth = getVal('daysInput', 20);
+
+    // 4. Gesamte Tagesstrecke berechnen (Hin- und Rückfahrt: x 2)
+    const dailyDistanceKm = distanceOneWay * 2; // 69.8 km * 2 = 139.6 km
+
+    // 5. Exakte Kosten berechnen
+    const rawDailyCost = (dailyDistanceKm / 100) * consumption * price;
+    const dailyCost = Math.round(rawDailyCost * 100) / 100; // Auf Cent runden (19.06 €)
+
+    const monthlyCost = dailyCost * daysPerMonth;          // 381.20 €
+    const yearlyCost = monthlyCost * 11;                   // 4193.20 € (11 Arbeitsmonate)
+
+    // 6. Ergebnisse in die UI-Karten schreiben
+    const dailyElem = document.getElementById('dailyCostDisplay') || document.getElementById('dailyCost');
+    const monthlyElem = document.getElementById('monthlyCostDisplay') || document.getElementById('monthlyCost');
+    const yearlyElem = document.getElementById('yearlyCostDisplay') || document.getElementById('yearlyCost');
+
+    if (dailyElem) dailyElem.innerText = dailyCost.toFixed(2) + ' €';
+    if (monthlyElem) monthlyElem.innerText = monthlyCost.toFixed(2) + ' €';
+    if (yearlyElem) yearlyElem.innerText = yearlyCost.toFixed(2) + ' €';
 }
-
 window.addEventListener('DOMContentLoaded', () => {
     if (typeof initTheme === 'function') {
         initTheme();
