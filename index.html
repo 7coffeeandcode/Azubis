@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="de" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DriveCost - Arbeitsweg Rechner</title>
+
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='3 3 50 56'><path d='M 18 16 C 35 16, 50 22, 44 34 C 38 46, 14 40, 24 52 L 36 52' stroke='%233b82f6' stroke-width='4.5' stroke-dasharray='4 3' stroke-linecap='round'/><g transform='translate(35, 38)'><path d='M 8 0 C 3.6 0 0 3.6 0 8 C 0 14 8 22 8 22 C 8 22 16 14 16 8 C 16 3.6 12.4 0 8 0 Z' fill='%23ef4444'/><circle cx='8' cy='7' r='2.5' fill='%23ffffff'/></g><g transform='translate(6, 6)'><rect x='0' y='13' width='3' height='2' rx='1' fill='%231d4ed8'/><rect x='25' y='13' width='3' height='2' rx='1' fill='%231d4ed8'/><path d='M 5 11 Q 8 3 14 3 Q 20 3 23 11 Z' fill='%2393c5fd'/><rect x='2' y='10' width='24' height='12' rx='4' fill='%232563eb'/><circle cx='6' cy='16' r='2' fill='%23ffffff'/><circle cx='22' cy='16' r='2' fill='%23ffffff'/><rect x='9' y='18' width='10' height='2' rx='1' fill='%231e40af'/></g></svg>">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' };
+    </script>
+
+    <!-- Leaflet CSS & Plugins -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Eigenes CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="min-h-screen pb-12 font-sans transition-colors duration-300">
+
+<!-- Kopfzeile (Header) mit Titel, Theme-Button & Straßendesign -->
+<header class="w-full bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 sticky top-0 z-50 pt-4 pb-2 px-4">
+    <div class="max-w-6xl mx-auto flex flex-col gap-2 w-full">
+
+        <!-- Seitentitel mit vergrößertem Logo und AutoKostenrechner -->
+        <div class="flex items-center justify-between w-full flex-nowrap">
+
+            <!-- Logo + Titel -->
+            <div class="flex items-center gap-3 transition-transform duration-300 hover:scale-105 cursor-pointer">
+
+                <!-- DriveCost Logo -->
+                <svg class="w-9 h-9 sm:w-12 sm:h-12 flex-shrink-0" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 18 16 C 35 16, 50 22, 44 34 C 38 46, 14 40, 24 52 L 36 52" stroke="#3b82f6" stroke-width="3.5" stroke-dasharray="4 3" stroke-linecap="round"/>
+                    <g transform="translate(35, 38)">
+                        <path d="M 8 0 C 3.6 0 0 3.6 0 8 C 0 14 8 22 8 22 C 8 22 16 14 16 8 C 16 3.6 12.4 0 8 0 Z" fill="#ef4444"/>
+                        <circle cx="8" cy="7" r="2.5" fill="#ffffff"/>
+                    </g>
+                    <g transform="translate(6, 6)">
+                        <rect x="0" y="13" width="3" height="2" rx="1" fill="#1d4ed8"/>
+                        <rect x="25" y="13" width="3" height="2" rx="1" fill="#1d4ed8"/>
+                        <path d="M 5 11 Q 8 3 14 3 Q 20 3 23 11 Z" fill="#93c5fd"/>
+                        <rect x="2" y="10" width="24" height="12" rx="4" fill="#2563eb"/>
+                        <circle cx="6" cy="16" r="2" fill="#ffffff"/>
+                        <circle cx="22" cy="16" r="2" fill="#ffffff"/>
+                        <rect x="9" y="18" width="10" height="2" rx="1" fill="#1e40af"/>
+                    </g>
+                </svg>
+
+                <!-- Titel & Untertitel -->
+                <div class="flex flex-col justify-center min-w-0">
+                    <h1 class="text-lg sm:text-2xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-none">
+                        Drive<span class="text-blue-600 dark:text-blue-400">Cost</span>
+                    </h1>
+                    <span class="text-[9px] sm:text-xs font-semibold text-blue-500 dark:text-blue-400 tracking-wider uppercase mt-1 truncate">
+                            AutoKostenrechner
+                        </span>
+                </div>
+
+            </div>
+
+            <!-- Darkmode-Umschalter -->
+            <button id="themeToggleBtn" onclick="toggleTheme()" class="px-2.5 py-1.5 sm:px-3 sm:py-2 rounded-xl border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all flex items-center gap-1.5 text-xs sm:text-sm font-medium shrink-0 ml-2">
+                <i id="themeIcon" class="fa-solid fa-moon text-blue-400"></i>
+                <span id="themeText" class="hidden sm:inline">Dunkel</span>
+            </button>
+
+        </div>
+
+        <!-- Interaktive Straße mit fahrenden Autos -->
+        <div class="header-road-full">
+            <span class="anim-car-1">🏎️</span>
+            <span class="anim-car-2">🚗</span>
+            <span class="anim-car-3">🚙</span>
+        </div>
+
+    </div>
+</header>
+
+<!-- Hauptinhalt -->
+<main class="max-w-6xl mx-auto px-4 space-y-6 mt-6">
+
+    <!-- Info-Banner -->
+    <div class="custom-card p-4 text-slate-800 dark:text-slate-200 shadow-lg flex items-start gap-3 border-l-4 border-l-blue-500">
+        <i class="fa-solid fa-circle-info text-blue-500 text-xl mt-0.5 flex-shrink-0"></i>
+        <div class="text-xs sm:text-sm leading-relaxed">
+            <strong>Willkommen beim Pendler-Fahrtkostenrechner!</strong><br>
+            Berechnen Sie schnell Ihre täglichen, monatlichen und jährlichen Spritkosten für den Arbeitsweg. Geben Sie einfach Wohnort und Arbeitsort ein.
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+        <!-- Linke Seite: Eingabefelder (Formular) -->
+        <section class="lg:col-span-5 space-y-6">
+
+            <!-- 1. Routenplanung mit gefixter Swap-Taste -->
+            <div class="custom-card p-5 shadow-xl">
+                <h2 class="text-lg font-bold mb-4 text-blue-600 dark:text-blue-400 flex items-center gap-2">
+                    <i class="fa-solid fa-map-location-dot"></i> 1. Route planen
+                </h2>
+
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+
+                        <!-- Adressfelder - LINKS -->
+                        <div class="flex-grow space-y-3">
+                            <!-- Startadresse -->
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Startadresse (Wohnort)</label>
+                                <div class="relative flex items-center">
+                                    <input type="text" id="startInput" value="München Hauptbahnhof" autocomplete="off"
+                                           class="w-full bg-slate-50 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
+                                    <button onclick="clearInput('startInput')" type="button" class="absolute right-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                                <div id="startSuggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden text-xs text-slate-700 dark:text-slate-200"></div>
+                            </div>
+
+                            <!-- Zieladresse -->
+                            <div class="relative">
+                                <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Zieladresse (Arbeitsplatz)</label>
+                                <div class="relative flex items-center">
+                                    <input type="text" id="destInput" value="Universitätsklinikum Augsburg, Stenglinstraße 2, 86156 Augsburg" autocomplete="off"
+                                           class="w-full bg-slate-50 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 pr-8 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
+                                    <button onclick="clearInput('destInput')" type="button" class="absolute right-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                        <i class="fa-solid fa-xmark"></i>
+                                    </button>
+                                </div>
+                                <div id="destSuggestions" class="hidden absolute left-0 right-0 top-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl z-50 overflow-hidden text-xs text-slate-700 dark:text-slate-200"></div>
+                            </div>
+                        </div>
+
+                        <!-- Swap Button mit Dreh-Pfeilen - jetzt RECHTS -->
+                        <button onclick="swapAddresses()" type="button" title="Start und Ziel tauschen"
+                                class="w-10 h-10 flex-shrink-0 self-center bg-blue-600/20 hover:bg-blue-600/30 border border-blue-500/40 text-blue-400 hover:text-white rounded-xl shadow-md transition flex items-center justify-center mt-3 group">
+                            <i class="fa-solid fa-arrows-rotate text-base group-hover:rotate-180 transition-transform duration-300"></i>
+                        </button>
+
+                    </div>
+
+                    <button onclick="calculateRoute()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-3 rounded-xl shadow-lg hover:shadow-blue-500/25 transition flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-route"></i> Route berechnen
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. Fahrzeug & Treibstoff -->
+            <div class="custom-card p-5 shadow-xl space-y-4">
+                <h2 id="fuelHeader" class="text-lg font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2 transition-colors">
+                    <i id="fuelHeaderIcon" class="fa-solid fa-car-side"></i> 2. Fahrzeug & Treibstoff
+                </h2>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-2">Treibstoffart auswählen</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <button type="button" onclick="setFuel('Benzin')" id="btnBenzin" class="fuel-btn bg-blue-600 text-white py-2 rounded-xl text-xs font-bold transition shadow-md flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-gas-pump"></i> Benzin
+                        </button>
+                        <button type="button" onclick="setFuel('Diesel')" id="btnDiesel" class="fuel-btn bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl py-2 px-3 text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-gas-pump"></i> Diesel
+                        </button>
+                        <button type="button" onclick="setFuel('Elektro')" id="btnElektro" class="fuel-btn bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl py-2 px-3 text-xs font-medium transition-all duration-200 flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-bolt"></i> Elektro
+                        </button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1" id="consumptionLabel">Verbrauch (L/100km)</label>
+                        <input type="number" step="0.1" id="consumptionInput" value="6.5" oninput="updateCalculations()"
+                               class="w-full bg-slate-50 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1" id="priceLabel">Preis pro Lit. (€)</label>
+                        <input type="number" step="0.01" id="priceInput" value="2.1" oninput="updateCalculations()"
+                               class="w-full bg-slate-50 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 dark:text-slate-300 mb-1">Arbeitstage pro Monat</label>
+                    <input type="number" id="daysInput" value="20" oninput="updateCalculations()"
+                           class="w-full bg-slate-50 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-900 dark:text-white">
+                </div>
+            </div>
+
+        </section>
+
+        <!-- Rechte Seite: Ergebnisse & Karte -->
+        <section class="lg:col-span-7 space-y-6 relative z-30">
+
+            <!-- 4 Info-Karten (используют стили из style.css) -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 relative z-20">
+
+                <!-- Karte 1: Strecke -->
+                <div class="custom-card p-4 text-center shadow-lg relative">
+                    <div class="flex items-center justify-center gap-1 mb-1">
+                        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Strecke</span>
+                        <div class="tooltip-container">
+                            <i class="fa-solid fa-circle-question text-blue-500 cursor-pointer text-xs"></i>
+                            <span class="tooltip-text">
+                    <strong>Berechnungsweg:</strong><br>
+                    Einfache Entfernung laut OpenStreetMap.
+                </span>
+                        </div>
+                    </div>
+                    <div id="distDisplay" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">0.0 km</div>
+                </div>
+
+                <!-- Karte 2: Kosten / Tag -->
+                <div class="custom-card p-4 text-center shadow-lg relative">
+                    <div class="flex items-center justify-center gap-1 mb-1">
+                        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Kosten / Tag</span>
+                        <div class="tooltip-container">
+                            <i class="fa-solid fa-circle-question text-blue-500 cursor-pointer text-xs"></i>
+                            <span class="tooltip-text">
+                    <strong>Berechnungsweg:</strong><br>
+                    ((Strecke * 2) / 100) * Verbrauch * Preis
+                </span>
+                        </div>
+                    </div>
+                    <div id="dailyCostDisplay" class="text-lg sm:text-xl font-bold text-emerald-600 dark:text-emerald-400">0.00 €</div>
+                </div>
+
+                <!-- Karte 3: Kosten / Monat -->
+                <div class="custom-card p-4 text-center shadow-lg relative">
+                    <div class="flex items-center justify-center gap-1 mb-1">
+                        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Kosten / Monat</span>
+                        <div class="tooltip-container">
+                            <i class="fa-solid fa-circle-question text-blue-500 cursor-pointer text-xs"></i>
+                            <span class="tooltip-text">
+                    <strong>Berechnungsweg:</strong><br>
+                    Tageskosten * Arbeitstage pro Monat
+                </span>
+                        </div>
+                    </div>
+                    <div id="monthlyCostDisplay" class="text-lg sm:text-xl font-bold text-blue-600 dark:text-blue-400">0.00 €</div>
+                </div>
+
+                <!-- Karte 4: Kosten / Jahr -->
+                <div class="custom-card p-4 text-center shadow-lg relative">
+                    <div class="flex items-center justify-center gap-1 mb-1">
+                        <span class="text-xs font-semibold text-slate-600 dark:text-slate-300">Kosten / Jahr</span>
+                        <div class="tooltip-container">
+                            <i class="fa-solid fa-circle-question text-blue-500 cursor-pointer text-xs"></i>
+                            <span class="tooltip-text">
+                    <strong>Berechnungsweg:</strong><br>
+                    Monatskosten * 11 Arbeitsmonate
+                </span>
+                        </div>
+                    </div>
+                    <div id="yearlyCostDisplay" class="text-lg sm:text-xl font-bold text-indigo-600 dark:text-indigo-400">0.00 €</div>
+                </div>
+
+            </div>
+
+            <!-- 2. Karten-Container -->
+            <div class="custom-card p-2 shadow-xl relative z-0">
+                <div id="map" class="h-[380px] w-full rounded-xl z-10"></div>
+            </div>
+
+            <div class="text-xs font-medium text-slate-700 dark:text-slate-300 text-center bg-white/70 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700">
+                * Die Berechnung basiert auf der Hin- und Rückfahrt am selben Arbeitstag (11 Arbeitsmonate pro Jahr).
+            </div>
+
+        </section>
+
+    </div>
+
+</main>
+<<!-- Footer / Mitwirkende & Credits -->
+<footer class="custom-card p-6 mt-10 mx-auto max-w-2xl text-center shadow-xl">
+
+    <!-- Entwicklerin & Jahr -->
+    <p class="text-lg font-bold text-slate-900 dark:text-white mb-1.5">
+        Entwickelt von <span class="text-blue-600 dark:text-blue-400">Diana</span> (2026)
+    </p>
+
+    <!-- Projektbeschreibung -->
+    <p class="text-sm text-slate-600 dark:text-slate-200 mb-4 leading-relaxed font-normal">
+        Azubi-Projekt: Fahrtkostenrechner zur einfachen Berechnung der täglichen Pendlerkosten.
+    </p>
+
+    <!-- Trennlinie -->
+    <div class="w-full h-px bg-slate-200 dark:bg-slate-700/80 my-4"></div>
+
+    <!-- Danksagungen / Beteiligte Personen -->
+    <div class="flex flex-wrap items-center justify-center gap-3 text-xs sm:text-sm">
+
+        <!-- Aufgabenstellung -->
+        <span class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-medium">
+            📌 Aufgabenstellung: <strong class="text-slate-900 dark:text-white">Elias</strong>
+        </span>
+
+        <!-- Konzept & Basiscode -->
+        <span class="px-3.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-slate-700 font-medium">
+            💡 Konzept &amp; Java-Code: <strong class="text-slate-900 dark:text-white">Susanne</strong>
+        </span>
+        <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-white/60 text-xs text-gray-700 shadow-sm">
+  📷 Fotos:
+  <a href="https://unsplash.com/@carlkho" target="_blank" rel="noopener noreferrer" class="font-medium hover:underline text-blue-600">Carl Kho</a>
+  &amp;
+  <a href="https://unsplash.com/@minkukang" target="_blank" rel="noopener noreferrer" class="font-medium hover:underline text-blue-600">Minku Kang</a>
+</span>
+
+
+
+    </div>
+
+</footer>
+
+
+
+<!-- Skripte -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.js"></script>
+
+<script src="theme.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
