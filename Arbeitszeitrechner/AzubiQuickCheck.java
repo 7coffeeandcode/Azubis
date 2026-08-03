@@ -11,11 +11,12 @@ public class AzubiQuickCheck{
         //feste Azubi-Parameter (38,5h / 5Tage = 7 h 42 min = 462 Minuten pro Tag
         final int tagesSoll=462;
 
-        System.out.println("\n ======= AZUBI QUICK-CHECK =======");
+        System.out.println("\n ======= AZUBI TIME-CHECK =======");
         System.out.println("\nDas ist ein Arbeitszeitrechner. Anhand der Eingabe des aktuellen und gewünschten Zeitkontostandes \nermittelt es die exakte Ausstempelzeit für den jeweiligen Tag. Ideal zum Wochenabschluss.\nNicht ins Minus, aber so früh wie möglich nach Hause :)");
         System.out.println("\nGrunddaten: 38,5h - 5 Tage die Woche - 7,42h am Tag");
-        System.out.println("\nBeachte die Kernarbeitszeit von 9-15 Uhr. Freitags kannst du früher Schluss machen.\nEinstempeln vor 6 Uhr und Ausstempeln nach 18 Uhr darfst du nicht.");
-        System.out.println("\nMusterwoche: \nDu baust von Mo-Do täglich 30min. Plus auf dein Zeitkonto. Am Freitag hast du dann zwei \nPlusstunden, setzt deine Zielzeit für kommende Woche wieder auf 00:00 und kannst nach \n5 Std. 42 Min. gehen, Pause wird erst ab 6h fällig.\n");
+        System.out.println("\nVorgaben:\n- Kernarbeitszeit von 9-15 Uhr. Freitags kannst du früher Schluss machen.\n- Stempelzeiten: nur im Zeitraum zwischen 6 Uhr und 18 Uhr erlaubt\n- Pausen: ab 6h-30min, ab 9h-45min und werden automatisch abgezigen und mitberechnet\n- Arbeitszeit: maximal 10h/Tag");
+        System.out.println("\nMusterwoche: \nDu baust von Mo-Do täglich 30min. Plus auf dein Zeitkonto. Am Freitag hast du dann zwei \nPlusstunden, setzt deine Zielzeit für kommende Woche wieder auf 00:00 und kannst nach \n5 Std. 42 Min. gehen.\n");
+        System.out.println("LET`S GO!\n");
 
          // 1. Einstempelzeit einlesen mit try-catch
         LocalTime kommen = null;
@@ -52,7 +53,7 @@ public class AzubiQuickCheck{
                 zeitkontoAltMinuten=(zeitAlt.getHour()*60+zeitAlt.getMinute())*-1;
                 }else{
                 //normal rechnen bei positivem Zeitkonto
-                LocalTime zeitAlte=LocalTime.parse(eingabeZeitkontoAlt , timeFormatter);
+                LocalTime zeitAlt=LocalTime.parse(eingabeZeitkontoAlt , timeFormatter);
                 zeitkontoAltMinuten=(zeitAlt.getHour()*60+zeitAlt.getMinute());
                 }
                 break; //wenn parsing klappt, springen wir aus der Schleife raus
@@ -147,8 +148,8 @@ public class AzubiQuickCheck{
             String vorzeichen = (neuesZielMinuten < 0) ? "-" : "";
             String neuesZielHHMM = vorzeichen + stundenText + ":" + minutenText;
 
-            System.out.println("Spätestens um " + tatsaechlicherFeierabend.format(timeFormatter) + " Uhr musst du ausstempeln.");
-            System.out.println("Das angepasste Zeitkonto steht dann auf " + neuesZielHHMM);
+            System.out.println("Spätestens um " + tatsaechlicherFeierabend.format(timeFormatter) + " Uhr musst du ausstempeln, inkl. "+finalePause+" Minuten Pause.");
+            System.out.println("Das angepasste Zeitkonto steht dann auf " + neuesZielHHMM+".");
 
             scanner.close();
             return;
