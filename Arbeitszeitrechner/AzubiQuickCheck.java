@@ -24,10 +24,10 @@ public class AzubiQuickCheck{
         LocalTime maxKernzeit=LocalTime.of(9,0);
         while (true) {
             System.out.print("Einstempelzeit heute eingeben (Format HH:mm, z.B. 07:30): \n");
-            String eingabeZeit = scanner.next();
+            String eingabeKommen = scanner.next();
 
             try {
-                kommen = LocalTime.parse(eingabeZeit, timeFormatter);
+                kommen = LocalTime.parse(eingabeKommen, timeFormatter);
                 if (kommen.isBefore(minKernzeit)|| kommen.isAfter(maxKernzeit)){
                     System.out.println("\nAchtung-Der Arbeitsbeginn muss in der Kernzeit zwischen 6-9 Uhr liegen. Bitte korrigieren:\n");
                     continue; //zurück an den Anfang der Schleife
@@ -39,22 +39,22 @@ public class AzubiQuickCheck{
             }
         }
         // 2. Abfrage altes Zeitkonto
-        int zeitkontoAltMinuten=0;
+        int altesZeitkontoMinuten=0;
         while(true){ //Abfangen von Eingabefehlern
                 
         System.out.println(
                 "\nBitte aktuellen Stand des Zeitkontos eingeben (Format HH:mm oder -HH:mm, z.B. 02:30 oder -10:15)");
-        String eingabeZeitkontoAlt = scanner.next();
+        String eingabeAltesZeitkonto= scanner.next();
             try{     
                 // Rechenweg bei Minuszeichen
-                if (eingabeZeitkontoAlt .startsWith("-")){
+                if (eingabeAltesZeitkonto.startsWith("-")){
                 //Minus abschneiden, parsen und direkt mit -1 multiplizieren
-                LocalTime zeitAlt=LocalTime.parse(eingabeZeitkontoAlt .substring(1), timeFormatter);
-                zeitkontoAltMinuten=(zeitAlt.getHour()*60+zeitAlt.getMinute())*-1;
+                LocalTime zeitAlt=LocalTime.parse(eingabeAltesZeitkonto.substring(1), timeFormatter);
+                altesZeitkontoMinuten=(zeitAlt.getHour()*60+zeitAlt.getMinute())*-1;
                 }else{
                 //normal rechnen bei positivem Zeitkonto
-                LocalTime zeitAlt=LocalTime.parse(eingabeZeitkontoAlt , timeFormatter);
-                zeitkontoAltMinuten=(zeitAlt.getHour()*60+zeitAlt.getMinute());
+                LocalTime zeitAlt=LocalTime.parse(eingabeAltesZeitkonto, timeFormatter);
+                altesZeitkontoMinuten=(zeitAlt.getHour()*60+zeitAlt.getMinute());
                 }
                 break; //wenn parsing klappt, springen wir aus der Schleife raus
             }catch (DateTimeParseException e){
@@ -62,14 +62,14 @@ public class AzubiQuickCheck{
             }
         }
         // 3. Erfassung des ZielZeitkontostandes
-        int zielZeitkontominuten=0;
+        int neuesZeitkontoMinuten=0;
         while(true){
             System.out.println("\nAuf welchen Wert wollen wir dein Zeitkonto bringen? Wähle etwas zwischen (Format HH:mm, z.B. 00:00 oder 02:00):");
             String eingabeZiel=scanner.next();
             try{ //der parse ins Zeitformat filtert falsche Eingaben (Minus, Länge, Buchstaben)
                 LocalTime zeitZiel=LocalTime.parse(eingabeZiel, timeFormatter);
-                zielZeitkontominuten=zeitZiel.getHour()*60+zeitZiel.getMinute();
-                if (zielZeitkontominuten>120){
+                neuesZeitkontoMinuten=zeitZiel.getHour()*60+zeitZiel.getMinute();
+                if (neuesZeitkontoMinuten>120){
                     System.out.println("\nLeider darf man als Azubi keine Überstunden anhäufen, deshalb kannst du nur max. 2 angeben.");
                 }else{
                 break; //erfolgreich raus aus der Schleife
@@ -79,7 +79,7 @@ public class AzubiQuickCheck{
             }
         }
         //4. Netto-Arbeitszeit für den letzten Tag berechnen
-        int nettoArbeitsMinuten=tagesSoll+zielZeitkontominuten-zeitkontoAltMinuten;
+        int nettoArbeitsMinuten=tagesSoll+neuesZeitkontoMinuten-altesZeitkontoMinuten;
 
         //5. gesetzliche Pausenregelung Berechnung
         int pauseMinuten=0;
@@ -98,7 +98,7 @@ public class AzubiQuickCheck{
                 .plusMinutes(nettoArbeitsMinuten)
                 .plusMinutes(pauseMinuten);
 
-        LocalTime maxTarifFeierabend=LocalTime.of(18,0);
+        LocalTime maxFeierabend=LocalTime.of(18,0);
 
 
         // 7. Prüfen, ob die Ergebnisvariable im gültigen Bereich liegt
@@ -106,13 +106,13 @@ public class AzubiQuickCheck{
         // 7. Prüfen der Grenzfälle mit Flags (Booleans)
         
         // A) Limit durch die 18-Uhr-Grenze ermitteln
-        int maxAnwesenheitMinuten = (int) java.time.Duration.between(kommen, maxTarifFeierabend).toMinutes();
-        int tatsaechlichePauseBis18 = (maxAnwesenheitMinuten > 585) ? 45 : ((maxAnwesenheitMinuten > 390) ? 30 : 0);
-        int maxNettoBis18 = maxAnwesenheitMinuten - tatsaechlichePauseBis18;
+        int maxAnwesenheitMinuten = (int) java.time.Duration.between(kommen, maxFeierabend).toMinutes();
+        int angepasstePause = (maxAnwesenheitMinuten > 585) ? 45 : ((maxAnwesenheitMinuten > 390) ? 30 : 0);
+        int maxNettoBis18 = maxAnwesenheitMinuten - angepasstePause;
 
         // B) Flags für die Grenzverletzungen setzen
         boolean verletzt10Stunden = nettoArbeitsMinuten > 600;
-        boolean verletzt18Uhr = feierabend.isAfter(maxTarifFeierabend);
+        boolean verletzt18Uhr = feierabend.isAfter(maxFeierabend);
 
         // C) Auswertung über die Flags
         if (verletzt10Stunden || verletzt18Uhr) {
@@ -137,19 +137,20 @@ public class AzubiQuickCheck{
 
             // 3. Ausstempeln & neues Zielkonto neu berechnen
             int finalePause = (erlaubtesNetto > 540) ? 45 : ((erlaubtesNetto > 360) ? 30 : 0);
-            LocalTime tatsaechlicherFeierabend = kommen.plusMinutes(erlaubtesNetto).plusMinutes(finalePause);
+            LocalTime angepassterFeierabend = kommen.plusMinutes(erlaubtesNetto).plusMinutes(finalePause);
 
-            int neuesZielMinuten = zeitkontoAltMinuten + erlaubtesNetto - tagesSoll;
+            // Die Hauptformel wird neu gerechnet
+            int angepasstesZeitkonto = altesZeitkontoMinuten + erlaubtesNetto - tagesSoll;
 
             // Formatierung in HH:mm inklusive Vorzeichen
-            int absMinuten = Math.abs(neuesZielMinuten);
+            int absMinuten = Math.abs(angepasstesZeitkonto);
             String stundenText = String.format("%02d", absMinuten / 60);
             String minutenText = String.format("%02d", absMinuten % 60);
-            String vorzeichen = (neuesZielMinuten < 0) ? "-" : "";
-            String neuesZielHHMM = vorzeichen + stundenText + ":" + minutenText;
+            String vorzeichen = (angepasstesZeitkonto < 0) ? "-" : "";
+            String ausgabeAngepasstesZeitkonto = vorzeichen + stundenText + ":" + minutenText;
 
-            System.out.println("Spätestens um " + tatsaechlicherFeierabend.format(timeFormatter) + " Uhr musst du ausstempeln, inkl. "+finalePause+" Minuten Pause.");
-            System.out.println("Das angepasste Zeitkonto steht dann auf " + neuesZielHHMM+".");
+            System.out.println("Spätestens um " + angepassterFeierabend+ " Uhr musst du ausstempeln, inkl. "+finalePause+" Minuten Pause.");
+            System.out.println("Das angepasste Zeitkonto steht dann auf " + ausgabeAngepasstesZeitkonto+".");
 
             scanner.close();
             return;
@@ -169,7 +170,7 @@ public class AzubiQuickCheck{
         }
 
         //9. Ergebnis
-        System.out.println("\nAbflug um "+feierabend.format(timeFormatter)+" Uhr.");
+        System.out.println("\nAbflug um "+feierabend+" Uhr.");
         scanner.close();
         }
         }
