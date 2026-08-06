@@ -18,7 +18,13 @@ public class AzubiQuickCheck{
         System.out.println("\nMusterwoche: \nDu baust von Mo-Do täglich 30min. Plus auf dein Zeitkonto. Am Freitag hast du dann zwei \nPlusstunden, setzt deine Zielzeit für kommende Woche wieder auf 00:00 und kannst nach \n5 Std. 42 Min. gehen.\n");
         System.out.println("LET`S GO!\n");
 
-         // 1. Einstempelzeit einlesen mit try-catch
+         // 1. Eingabevalidierungsschleife - Einstempelzeit einlesen: Die Eingabe erfolgt in eine Schleife auf true mit try/catch und startet mit einer Eingabeaufforderung
+         // Die Eingabe erfolgt als String, der in ein Zeitformat geparst wird. 
+         // Bei Erfolg von try / richtigem Eingabeformat wird er im Datentyp Localtime gespeichert
+         // Dann erfolgt die Prüfung auf die Bedingungen der Kernzeitsperre, trifft eine zu - wird mit continue und einem Hinweis die Schleife neu gestartet
+         // trifft keine Bedingung zu wird die Schleife mit break verlassen 
+         // hat das parsen nicht geklappt wird mit catch (DateTimeParseException) ein Hinweis ausgegeben und die Schleife wiederholt sich
+
         LocalTime kommen = null;
         LocalTime minKernzeit=LocalTime.of(6,0);
         LocalTime maxKernzeit=LocalTime.of(9,0);
@@ -38,11 +44,11 @@ public class AzubiQuickCheck{
                 System.out.println("\nUngültiges Zeitformat! Bitte um Korrektur:\n");
             }
         }
-        // 2. Abfrage altes Zeitkonto
+        // 2. Eingabevalidierungsschleife - Abfrage altes Zeitkonto: Die Eingabe erfolgt in eine Schleife auf true mit try/catch und startet mit einer Eingabeaufforderung
+        // Die Eingabe erfolgt als String, der zunächst auf ein Minuszeichen geprüft wird bevor er in die richtige Verzweigung geht um in ein in ein Zeitformat geparst zu werden. 
         int altesZeitkontoMinuten=0;
-        while(true){ //Abfangen von Eingabefehlern
-                
-        System.out.println(
+        while(true){                 
+            System.out.println(
                 "\nBitte aktuellen Stand des Zeitkontos eingeben (Format HH:mm oder -HH:mm, z.B. 02:30 oder -10:15)");
         String eingabeAltesZeitkonto= scanner.next();
             try{     
