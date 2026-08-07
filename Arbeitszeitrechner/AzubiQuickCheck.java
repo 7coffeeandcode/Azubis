@@ -106,7 +106,6 @@ public class AzubiQuickCheck{
            
         }else{
             pauseMinuten=0;
-            
         }
         //6. Berechnung Ausstempelzeit 
         LocalTime ausstempeln=einstempeln //Ziel- und Ausgabevariable
@@ -114,46 +113,40 @@ public class AzubiQuickCheck{
                 .plusMinutes(pauseMinuten);    
 
         // 7. Prüfen, ob die Ergebnisvariable im gültigen Bereich liegt mit Flags (Booleans) und Sonderausgaben   
-        // A) Limit durch die 18-Uhr-Grenze ermitteln
+        LocalTime maxFeierabend=LocalTime.of(18,0);        
 
-        LocalTime maxFeierabend=LocalTime.of(18,0);
-        //Abruf einer Methode zur Berechnung der Zeitspanne in den LocalTime Variablen
-        int maxAnwesenheitMinuten = (int) java.time.Duration.between(einstempeln, maxFeierabend).toMinutes(); 
-
-        //Anpassung der Pause mit dem Ternär Operator
-        int angepasstePause = (maxAnwesenheitMinuten > 585) ? 45 : ((maxAnwesenheitMinuten > 390) ? 30 : 0);
-
-        // Berechnung der durch die angepasste Pause sich neu ergebenden Nettoarbeitsminuten für den Trichtervergleich in C2
-        int maxNettoBis18 = maxAnwesenheitMinuten - angepasstePause;
-
-        // B) Flags für die Grenzverletzungen setzen
+        // A) Flags für die Grenzverletzungen setzen
         boolean verletzt10Stunden = nettoArbeitsMinuten > 600;
         boolean verletzt18Uhr = ausstempeln.isAfter(maxFeierabend);
 
-        // C) Auswertung über die Flags
-        if (verletzt10Stunden || verletzt18Uhr) {
-            
-            // Textausgabe je nach Zustand der Flags
-            if (verletzt10Stunden && verletzt18Uhr) {
-                System.out.println("\nDu überschreitest die maximale Arbeitszeit von 10h UND die 18 Uhr Grenze.");
-            } else if (verletzt10Stunden) {
-                System.out.println("\nÜber 10 Stunden sind nicht erlaubt. Wir sind nicht in Asien!");
-            } else if (verletzt18Uhr) {
-                System.out.println("\nDu erreichst die 18 Uhr Grenze. Länger darfst du nicht arbeiten.");
-            }
+        // B) Auswertung über die Flags
+        if (verletzt10Stunden || verletzt18Uhr) {        
+
             // Erlaubte Netto-Minuten durch den Trichter bestimmen
             int erlaubtesNetto = nettoArbeitsMinuten;
+
             if (verletzt10Stunden) {
                 erlaubtesNetto = Math.min(erlaubtesNetto, 600);
             }
             if (verletzt18Uhr) {
+                //Netto Arbeitszeit-Limit durch die 18-Uhr-Grenze ermitteln
+                    //Abruf einer Methode zur Berechnung der Zeitspanne in den LocalTime Variablen
+                    int maxAnwesenheitMinuten = (int) java.time.Duration.between(einstempeln, maxFeierabend).toMinutes(); 
+
+                    //Anpassung der Pause mit dem Ternär Operator
+                    int angepasstePause = (maxAnwesenheitMinuten > 585) ? 45 : ((maxAnwesenheitMinuten > 390) ? 30 : 0);
+
+                    // Berechnung der durch die angepasste Pause sich neu ergebenden Nettoarbeitsminuten für den Trichtervergleich in C2
+                    int maxNettoBis18 = maxAnwesenheitMinuten - angepasstePause;
+
                 erlaubtesNetto = Math.min(erlaubtesNetto, maxNettoBis18);
             }
-            // Ausstempelzeit neu berechnen
+        // C) Neuberechnungen
+            // Ausstempelzeit 
             int finalePause = (erlaubtesNetto > 540) ? 45 : ((erlaubtesNetto > 360) ? 30 : 0); //Sonderausgabenvariable
             LocalTime angepasstesAusstempeln = einstempeln.plusMinutes(erlaubtesNetto).plusMinutes(finalePause); //Sonderausgabenvariable
 
-            // ZielZeitkonto neu berechnen, Umstellung der Hauptformel aus 4.
+            // ZielZeitkonto - Umstellung der Hauptformel aus 4.
             int angepasstesZeitkonto = altesZeitkontoMinuten + erlaubtesNetto - tagesSoll; 
 
             // Formatierung in HH:mm inklusive Vorzeichen
@@ -164,7 +157,16 @@ public class AzubiQuickCheck{
             String vorzeichen = (angepasstesZeitkonto < 0) ? "-" : "";
             String ausgabeAngepasstesZeitkonto = vorzeichen + stundenText + ":" + minutenText; //Sonderausgabenvariable
 
-            // Ergebnisausgabe für den Sonderfall
+        // D) Ergebnisausgabe für den Sonderfall (Zielvariable übrschreitet Grenzwerte)
+            // Textausgabe je nach Zustand der Flags
+            if (verletzt10Stunden && verletzt18Uhr) {
+                System.out.println("\nDu überschreitest die maximale Arbeitszeit von 10h UND die 18 Uhr Grenze.");
+            } else if (verletzt10Stunden) {
+                System.out.println("\nÜber 10 Stunden sind nicht erlaubt. Wir sind nicht in Asien!");
+            } else if (verletzt18Uhr) {
+                System.out.println("\nDu erreichst die 18 Uhr Grenze. Länger darfst du nicht arbeiten.");
+            }
+            //Ergebnis
             System.out.println("Spätestens um " + angepasstesAusstempeln+ " Uhr musst du ausstempeln, inkl. "+finalePause+" Minuten Pause.");
             System.out.println("Das angepasste Zeitkonto steht dann auf " + ausgabeAngepasstesZeitkonto+".");
 
@@ -188,6 +190,6 @@ public class AzubiQuickCheck{
         //9. Ergebnisausgabe
         System.out.println("\nAbflug um "+ausstempeln+" Uhr.");
         scanner.close();
-        }
-        }
+    }
+}
     
