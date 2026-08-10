@@ -1,0 +1,74 @@
+Pseudocode - PROGRAMM AzubiTimeCheck
+
+    // --- 1. EINGABEN EINLESEN & PRÜFEN ---
+    
+    WIEDERHOLE:
+        Frage: "Wann hast du eingestempelt? (HH:mm)"
+        WENN Zeit gültig UND zwischen 06:00 und 09:00 Uhr:
+            Speichere einstempelZeit
+            STOPPE SCHLEIFE
+        SONST:
+            Zeige Fehler: "Bitte Uhrzeit zwischen 6 und 9 Uhr eingeben!"
+
+    WIEDERHOLE:
+        Frage: "Aktueller Stand des Zeitkontos? (z.B. 02:30 oder -01:15)"
+        WENN Format gültig:
+            Speichere altesKonto (in Minuten umgerechnet)
+            STOPPE SCHLEIFE
+        SONST:
+            Zeige Fehler: "Ungültiges Format!"
+
+    WIEDERHOLE:
+        Frage: "Ziel-Stand für das Zeitkonto? (z.B. 00:00)"
+        WENN Format gültig UND Ziel <= 2 Stunden (120 Min):
+            Speichere zielKonto (in Minuten umgerechnet)
+            STOPPE SCHLEIFE
+        SONST:
+            Zeige Fehler: "Ungültiges Format oder mehr als 2 Überstunden!"
+
+
+    // --- 2. BERECHNUNG ---
+    
+    tagesSoll = 462 Minuten (7h 42m)
+    
+    // Nötige Netto-Arbeitszeit berechnen
+    nettoArbeitszeit = tagesSoll + zielKonto - altesKonto
+
+    // Gesetzliche Pause ermitteln (§4 ArbZG)
+    WENN nettoArbeitszeit > 9 Stunden (540 Min):
+        pause = 45 Minuten
+    SONST WENN nettoArbeitszeit > 6 Stunden (360 Min):
+        pause = 30 Minuten
+    SONST:
+        pause = 0 Minuten
+
+    // Vorläufige Feierabend-Zeit berechnen
+    ausstempeln = einstempelZeit + nettoArbeitszeit + pause
+
+
+    // --- 3. PRÜFUNG AUF REGELVERSTÖSSE & AUSGABE ---
+    
+    verletztMaxArbeitszeit = (nettoArbeitszeit > 10 Stunden)
+    verletzt18UhrGrenze     = (ausstempeln nach 18:00 Uhr)
+
+    WENN verletztMaxArbeitszeit ODER verletzt18UhrGrenze:
+        
+        // Arbeitszeit kappen auf das gesetzlich Erlaubte (max. 10h ODER max. bis 18 Uhr)
+        erlaubtesNetto = Begrenze(nettoArbeitszeit)
+        angepasstePause = BerechnePauseFür(erlaubtesNetto)
+        
+        // Neue Ausstempelzeit & geändertes Ziel-Zeitkonto berechnen
+        angepasstesAusstempeln = einstempelZeit + erlaubtesNetto + angepasstePause
+        neuesZielKonto = altesKonto + erlaubtesNetto - tagesSoll
+        
+        Zeige Warnung (je nachdem ob >10h, >18 Uhr oder beides)
+        Zeige: "Spätestens ausstempeln um [angepasstesAusstempeln] Uhr."
+        Zeige: "Dein Zeitkonto steht dann auf [neuesZielKonto]."
+        
+    SONST:
+        
+        // Normalfall: Keine Regelverstöße
+        Zeige Pausen-Hinweis (0, 30 oder 45 Minuten)
+        Zeige: "Abflug um [ausstempeln] Uhr!"
+
+ENDE PROGRAMM
