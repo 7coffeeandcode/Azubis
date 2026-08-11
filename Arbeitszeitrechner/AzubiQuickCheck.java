@@ -178,13 +178,10 @@ public class AzubiQuickCheck{
        //gesetzliche Pausenregelung Ausgabe, errechnent in 5.
         
         if (nettoArbeitsMinuten>540){
-            pauseMinuten=45;
             System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über neun Stunden. Nach §4 ArbZG rechne ich dir 45 min. Pause ein.");
         }else if (nettoArbeitsMinuten>360){
-            pauseMinuten=30;
-           System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über sechs Stunden. Nach §4 ArbZG rechne ich dir 30 min. Pause ein.");
+            System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl über sechs Stunden. Nach §4 ArbZG rechne ich dir 30 min. Pause ein.");
         }else{
-            pauseMinuten=0;
             System.out.println("\nDein Arbeitstag hat entsprechend deiner Auswahl unter sechs Stunden. Nach §4 ArbZG rechne ich keine Pause ein.");
         }
         //9. Ergebnisausgabe
