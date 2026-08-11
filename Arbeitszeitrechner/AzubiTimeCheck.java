@@ -3,7 +3,7 @@ import java.time.LocalTime; // speichert und verarbeitet reine Uhrzeiten
 import java.time.format.DateTimeFormatter; //formattiert Daten in Zeitobjekte mit definiertem Format
 import java.time.format.DateTimeParseException; //fängt fehlerhafte Zeiteingaben ab
 
-public class AzubiQuickCheck{
+public class AzubiTimeCheck{
     public static void main(String[]args){
          Scanner scanner = new Scanner(System.in);
         DateTimeFormatter timeFormatter=DateTimeFormatter.ofPattern("HH:mm");
